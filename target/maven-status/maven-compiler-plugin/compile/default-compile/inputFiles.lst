@@ -1,0 +1,10 @@
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/JobAgentApplication.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/controller/DashboardController.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/entity/ApplicationStatus.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/entity/JobApplication.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/repository/JobApplicationRepository.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/service/JobScraperService.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/service/ResumeAdapterAgent.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/service/ResumeService.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/service/TriageAgent.java
+/Users/probal/Documents/warzone/personal project/local-job-agent/src/main/java/com/localjobagent/workflow/JobWorkflowOrchestrator.java

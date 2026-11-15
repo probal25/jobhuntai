@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Job Agent — Review Dashboard</title>
+    <!-- Tailwind via CDN. Renders locally; no build step required. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<!-- ================= HEADER ================= -->
+<header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">🤖 Local Job Agent</h1>
+            <p class="text-xs text-slate-400">100% local · Ollama + Jsoup + H2 · zero API keys</p>
+        </div>
+        <form th:action="@{/run-workflow}" method="post">
+            <button type="submit"
+                    class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition
+                           px-5 py-2.5 rounded-lg font-semibold text-sm shadow-lg shadow-indigo-900/50">
+                ▶ Run Workflow
+            </button>
+        </form>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Flash message -->
+    <div th:if="${message}"
+         class="mb-6 bg-emerald-900/40 border border-emerald-700 text-emerald-300
+                px-4 py-3 rounded-lg text-sm"
+         th:text="${message}">
+    </div>
+
+    <!-- ================= STATUS TABS ================= -->
+    <div class="flex gap-3 mb-8">
+        <a th:href="@{/(status='PENDING_REVIEW')}"
+           th:class="${activeFilter == T(com.localjobagent.entity.ApplicationStatus).PENDING_REVIEW}
+               ? 'px-4 py-2 rounded-lg text-sm font-semibold bg-amber-600/20 border border-amber-600 text-amber-300'
+               : 'px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-400 hover:bg-slate-700'">
+            ⏳ Pending <span th:text="${pendingCount}"></span>
+        </a>
+        <a th:href="@{/(status='APPROVED')}"
+           th:class="${activeFilter == T(com.localjobagent.entity.ApplicationStatus).APPROVED}
+               ? 'px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-600/20 border border-emerald-600 text-emerald-300'
+               : 'px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-400 hover:bg-slate-700'">
+            ✅ Approved <span th:text="${approvedCount}"></span>
+        </a>
+        <a th:href="@{/(status='APPLIED')}"
+           th:class="${activeFilter == T(com.localjobagent.entity.ApplicationStatus).APPLIED}
+               ? 'px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600/20 border border-blue-600 text-blue-300'
+               : 'px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-400 hover:bg-slate-700'">
+            🚀 Applied <span th:text="${#lists.size(jobs)}"></span>
+        </a>
+        <a th:href="@{/(status='INTERVIEWING')}"
+           th:class="${activeFilter == T(com.localjobagent.entity.ApplicationStatus).INTERVIEWING}
+               ? 'px-4 py-2 rounded-lg text-sm font-semibold bg-purple-600/20 border border-purple-600 text-purple-300'
+               : 'px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-400 hover:bg-slate-700'">
+            🤝 Interviewing <span th:text="${#lists.size(jobs)}"></span>
+        </a>
+        <a th:href="@{/(status='REJECTED')}"
+           th:class="${activeFilter == T(com.localjobagent.entity.ApplicationStatus).REJECTED}
+               ? 'px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600/20 border border-rose-600 text-rose-300'
+               : 'px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-400 hover:bg-slate-700'">
+            ❌ Rejected <span th:text="${rejectedCount}"></span>
+        </a>
+    </div>
+
+    <!-- ================= EMPTY STATE ================= -->
+    <div th:if="${#lists.isEmpty(jobs)}" class="text-center py-24 text-slate-500">
+        <div class="text-5xl mb-4">🗂️</div>
+        <p class="text-lg font-medium">No <span th:text="${activeFilter}"></span> jobs</p>
+        <p class="text-sm mt-1">Hit "Run Workflow" to scrape, triage, and tailor with your local agents.</p>
+    </div>
+
+    <!-- ================= JOB CARDS ================= -->
+    <div class="space-y-6">
+        <div th:each="job : ${jobs}"
+             class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+
+            <!-- Card header -->
+            <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+                <div>
+                    <h2 th:text="${job.title}" class="text-lg font-bold"></h2>
+                    <p class="text-sm text-slate-400">
+                        <span th:text="${job.company}"></span> ·
+                        <a th:href="${job.link}" target="_blank"
+                           class="text-indigo-400 hover:underline">view posting ↗</a>
+                    </p>
+                    <p class="text-xs text-slate-500 mt-1"
+                       th:text="${job.triageReasoning}"></p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <!-- Match score badge -->
+                    <span class="px-3 py-1.5 rounded-full text-sm font-bold"
+                          th:classappend="${job.matchScore >= 90} ? ' bg-emerald-900/50 text-emerald-300'
+                                       : (${job.matchScore >= 75} ? ' bg-amber-900/50 text-amber-300'
+                                       : ' bg-slate-800 text-slate-400')"
+                          th:text="${job.matchScore} + '% match'">
+                    </span>
+                </div>
+            </div>
+
+            <!-- Side-by-side: job description vs tailored resume -->
+            <div class="grid md:grid-cols-2 gap-4 mb-5">
+                <!-- Job description panel -->
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                        📋 Job Description
+                    </h3>
+                    <p th:text="${job.description}"
+                       class="text-sm text-slate-300 whitespace-pre-wrap max-h-96 overflow-y-auto"></p>
+                </div>
+
+                <!-- Tailored resume panel -->
+                <div class="bg-slate-950/60 border border-indigo-900/50 rounded-xl p-4">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">
+                        ✍️ Tailored Resume (Markdown)
+                    </h3>
+                    <pre th:text="${job.tailoredResume}"
+                         class="text-sm text-slate-300 whitespace-pre-wrap font-mono
+                                max-h-96 overflow-y-auto"></pre>
+                </div>
+            </div>
+
+            <!-- Decision buttons (only for pending jobs) -->
+            <div th:if="${job.status.name() == 'PENDING_REVIEW'}"
+                 class="flex gap-3">
+                <form th:action="@{/decision/{id}(id=${job.id})}" method="post">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit"
+                            class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition
+                                   px-6 py-2 rounded-lg font-semibold text-sm">
+                        ✔ Approve
+                    </button>
+                </form>
+                <form th:action="@{/decision/{id}(id=${job.id})}" method="post">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit"
+                            class="bg-rose-600/80 hover:bg-rose-500 active:scale-95 transition
+                                   px-6 py-2 rounded-lg font-semibold text-sm">
+                        ✖ Reject
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lifecycle transitions (for approved jobs) -->
+            <div th:if="${job.status.name() == 'APPROVED'}"
+                 class="flex gap-3">
+                <form th:action="@{/transition/{id}(id=${job.id})}" method="post">
+                    <input type="hidden" name="nextStatus" value="APPLIED">
+                    <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-500 active:scale-95 transition
+                                   px-6 py-2 rounded-lg font-semibold text-sm">
+                        🚀 Mark as Applied
+                    </button>
+                </form>
+            </div>
+
+            <!-- Interview transitions (for applied jobs) -->
+            <div th:if="${job.status.name() == 'APPLIED'}"
+                 class="flex gap-3">
+                <form th:action="@{/transition/{id}(id=${job.id})}" method="post">
+                    <input type="hidden" name="nextStatus" value="INTERVIEWING">
+                    <button type="submit"
+                            class="bg-purple-600 hover:bg-purple-500 active:scale-95 transition
+                                   px-6 py-2 rounded-lg font-semibold text-sm">
+                        🤝 Mark as Interviewing
+                    </button>
+                </form>
+            </div>
+
+            <!-- Final outcome transitions (for interviewing jobs) -->
+            <div th:if="${job.status.name() == 'INTERVIEWING'}"
+                 class="flex gap-3">
+                <form th:action="@{/transition/{id}(id=${job.id})}" method="post">
+                    <input type="hidden" name="nextStatus" value="OFFERED">
+                    <button type="submit"
+                            class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition
+                                   px-6 py-2 rounded-lg font-semibold text-sm">
+                        🎉 Mark as Offered
+                    </button>
+                </form>
+                <form th:action="@{/transition/{id}(id=${job.id})}" method="post">
+                    <input type="hidden" name="nextStatus" value="REJECTED">
+                    <button type="submit"
+                            class="bg-rose-600/80 hover:bg-rose-500 active:scale-95 transition
+                                   px-6 py-2 rounded-lg font-semibold text-sm">
+                        ✖ Mark as Rejected
+                    </button>
+                </form>
+            </div>
+
+            <!-- Already reviewed/finalized -->
+            <div th:if="${job.status.name() != 'PENDING_REVIEW' and job.status.name() != 'APPROVED' and job.status.name() != 'APPLIED' and job.status.name() != 'INTERVIEWING'}"
+                 class="text-xs text-slate-500 italic">
+                Reviewed on <span th:text="${#temporals.format(job.reviewedAt, 'yyyy-MM-dd HH:mm')}"></span>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
