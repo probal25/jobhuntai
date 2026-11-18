@@ -1,0 +1,26 @@
+# Generated resumes and outputs
+generated_resumes/
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE files
+.idea/
+.iml
+.vscode/
+.project
+
+# Logs
+logs/
+*.log
+
+# Distribution packages
+dist/
+dist/*
+
+# Compiled sources
+build/classes
+build/generated-sources
+build/test-results
